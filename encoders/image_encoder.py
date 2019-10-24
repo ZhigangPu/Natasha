@@ -7,18 +7,27 @@ class ImageEncoder:
     """Image encoder with CNN -> RNN architecture
 
     Attributes:
-        config: configuration defining architecture of CNN
+        num_image_channel: image color channel
+        vocab_size: vocabulary size
+        hidden_size: rnn encoder hidden size
+        num_rnn_layers: rnn encoder hidden layer
+        num_directions: if bidirectional: 2, else 1
+        dropout: rnn dropout rate
+        h_projection: last rnn hidden state cast transformation, \
+                    for sake of init hidden state of decoder
+        c_projection: last rnn cell state cast transformation, \
+                    for sake of init cell state of decoder
     """
     def __init__(self, config):
         # cnn
         self.num_image_channel = config.num_image_channel
         # rnn
-        self.embed_size = config.embed_size
-        self.vocab_size = config.vocab_size
         self.hidden_size = config.hidden_size
         self.num_rnn_layers = config.num_rnn_layers
         self.num_directions = 2 if config.bidirectional else 1
         self.dropout = config.dropout if config.dropout is not False else None
+        self.h_projection = nn.Linear(self.num_directions * self.hidden_size, self.hidden_size, bias=False)
+        self.c_projection = nn.Linear(self.num_directions * self.hidden_size, self.hidden_size, bias=False)
 
         # cnn architecture
         self.layer1 = nn.Conv2d(self.num_image_channel, 64, kernel_size=(3, 3),
@@ -38,14 +47,14 @@ class ImageEncoder:
         self.batch_norm2 = nn.BatchNorm2d(512)
         self.batch_norm3 = nn.BatchNorm2d(512)
 
-        self.rnn = nn.LSTM(input_size=self.embed_size,
+        self.rnn = nn.LSTM(input_size=512,
                            hidden_size=self.hidden_size,
                            num_layers=self.num_rnn_layers,
                            bias=False,
                            dropout=self.dropout if self.dropout is not None else 0,
                            bidirectional=True if self.num_directions == 2 else False)
 
-        self.embedding = nn.Embedding(self.vocab_size, self.embed_size)
+        self.embedding = nn.Embedding(500, 512)  # here vocab_size equals to row numbers in the last cnn layer
 
     def forward(self, src):
         """Forward operation of encoder
@@ -104,16 +113,22 @@ class ImageEncoder:
         for row in range(src.size(2)):
             input_from_cnn_features = src[:, :, row, :].transpose(0, 2).transpose(1, 2)  # (imgW/2/2/2, batch_size, 512)
             input_to_add_h0 = torch.Tensor(src.size(0)).type_as(input_from_cnn_features)\
-                .long().fill_(row)
+                .long().fill_(row)  # (batch_size)
             input_to_add_h0 = self.embedding(input_to_add_h0)
             input_rnn = torch.cat(
                 (input_to_add_h0.view(1, input_to_add_h0.size(0), input_to_add_h0.size(1)), input_from_cnn_features), 0
                 )
             enc_hiddens, enc_last_states = self.rnn(input_rnn)  # enc_hiddens: (imgW/2/2/2 + 1, batch_size, hidden_size)
             visual_context.append(enc_hiddens)
-        # visual_context: (imgH/2/2/2 * (imgW/2/2/2 + 1), batch_size, hidden_size)
-        visual_context = torch.cat(visual_context, 0)
+        # visual_context: (batch_size, imgH/2/2/2 * (imgW/2/2/2 + 1), hidden_size)
+        visual_context = torch.cat(visual_context, 0).transpose(0, 1)
+
         # last_hidden_t: (bidirection, batch_size, hidden_size)
-        dec_init_state = enc_last_states
+        last_hidden, last_cell = enc_last_states
+        last_hidden = torch.cat((last_hidden[0], last_hidden[1]), 1)
+        dec_init_hidden = self.h_projection(last_hidden)   # dec_init_hidden: (batch_size, hidden_size)
+        last_cell = torch.cat((last_cell[0], last_cell[1]), 1)
+        dec_init_cell = self.c_projection(last_cell)
+        dec_init_state = (dec_init_hidden, dec_init_cell)
 
         return dec_init_state, visual_context
