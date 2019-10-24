@@ -239,7 +239,7 @@ class Vocab:
         if self.src is not None:
             json.dump(dict(src_word2id=self.src.word2id, tgt_word2id=self.tgt.word2id), open(file_path, 'w'), indent=2)
         else:
-            json.dump(self.tgt.word2id, open(file_path, 'w'), indent=2)
+            json.dump(dict(tgt_word2id=self.tgt.word2id), open(file_path, 'w'), indent=2)
 
     @staticmethod
     def load(file_path):
