@@ -10,6 +10,7 @@ class Embeddings(nn.Module):
     def __init__(self, config, vocab):
         super(Embeddings, self).__init__()
         self.embed_size = config.embed_size
+        self.vocab = vocab
 
         if vocab.src is not None:
             self.source = nn.Embedding(len(vocab.src), self.embed_size)
