@@ -1,5 +1,5 @@
 import json
-from utils.utils import create_dir
+from utils.linux_wrapper import create_dir
 from shutil import copyfile
 
 
