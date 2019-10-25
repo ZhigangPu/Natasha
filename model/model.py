@@ -37,3 +37,19 @@ class ImageToLatexModel(nn.Module):
 
         return loss
 
+    def beam_search(self, image):
+        """Given a single source sentence, perform beam search, yielding translation in the target
+
+        Args:
+            image: source image (1, channel, h, w)
+
+        Returns:
+            hypothesis(List(Hypothesis)): a list of hypothesis. see more at decoder class definition
+        """
+        image_padded = pad_batch_images(image)
+        image_t = torch.tensor(image_padded).transpose(1, 3).transpose(2, 3).float()
+        dec_init_state, visual_context = self.encoder(image_t)
+
+        hypothesis = self.decoder.beam_search(dec_init_state, visual_context, beam_size=5, max_decoding_time_step=150)
+
+        return hypothesis
