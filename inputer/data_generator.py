@@ -1,5 +1,5 @@
 from scipy.misc import imread
-from utils.utils import load_formulas
+from utils.utils import load_formulas, get_logger
 from utils.linux_wrapper import create_dir
 from utils.image_operation import build_images
 
@@ -40,7 +40,7 @@ class DataGenerator:
 
     """
 
-    def __init__(self, path_formulas, dir_images, path_matching, logger, bucket=False,
+    def __init__(self, path_formulas, dir_images, path_matching, bucket=False,
                  formula_pre=lambda s: s.strip().split(' '), iter_mode='data',
                  img_pre=lambda x: x, max_iter=None, max_len=None, bucket_size=20,
                  ):
@@ -57,7 +57,6 @@ class DataGenerator:
         self._length = None
         self._formulas = self._load_formulas(path_formulas)
         self._set_data_generator()
-        self.logger = logger
 
     def _set_data_generator(self):
         """Sets iterable or generator of tuples (image path, formula id)"""
@@ -82,9 +81,9 @@ class DataGenerator:
         try:
             formula_raw = self._formulas[int(formula_id)]
         except KeyError:
-            self.logger("Tried to access id {} but only {} formulas".format(
+            print("Tried to access id {} but only {} formulas".format(
                 formula_id, len(self._formulas)))
-            self.logger("Possible fix: mismatch between matching file and formulas")
+            print("Possible fix: mismatch between matching file and formulas")
             raise KeyError
 
         return formula_raw
@@ -146,7 +145,7 @@ class DataGenerator:
         Returns:
             bucketed_dataset(list[tuple]): [(img_path1, id1), ...]
         """
-        self.logger("Bucketing the dataset ...")
+        print("Bucketing the dataset ...")
         bucketed_dataset = []
 
         old_mode = self._iter_mode # store the old iteration mode
@@ -167,14 +166,14 @@ class DataGenerator:
             data_buckets[s] += [(img_path, formula_id)]
 
         # write the rest of the buffer
-        for k, v in data_buckets.iteritems():
+        for k, v in data_buckets.items():
             for (img_path, formula_id) in v:
                 bucketed_dataset += [(img_path, formula_id)]
 
         self._iter_mode = old_mode
         self._length = idx + 1
 
-        self.logger("bucket done.")
+        print("bucket done.")
         return bucketed_dataset
 
     def build(self, quality=100, density=200, down_ratio=2, buckets=None,
