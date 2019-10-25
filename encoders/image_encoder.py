@@ -3,12 +3,11 @@ import torch.nn as nn
 import torch
 
 
-class ImageEncoder:
+class ImageEncoder(nn.Module):
     """Image encoder with CNN -> RNN architecture
 
     Attributes:
         num_image_channel: image color channel
-        vocab_size: vocabulary size
         hidden_size: rnn encoder hidden size
         num_rnn_layers: rnn encoder hidden layer
         num_directions: if bidirectional: 2, else 1
@@ -19,6 +18,7 @@ class ImageEncoder:
                     for sake of init cell state of decoder
     """
     def __init__(self, config):
+        super(ImageEncoder, self).__init__()
         # cnn
         self.num_image_channel = config.num_image_channel
         # rnn
