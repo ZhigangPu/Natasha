@@ -11,7 +11,7 @@ def pad_sents(sents, pad_token):
     Args:
         sents (list[list[str]]): list of sentences, where each sentence
                                     is represented as a list of words
-        pad_token (int): padding token
+        pad_token (str): padding token
 
     Returns:
         sents_padded (list[list[str]]): list of sentences where sentences shorter
