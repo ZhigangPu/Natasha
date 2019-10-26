@@ -19,6 +19,7 @@ class ImageEncoder(nn.Module):
     """
     def __init__(self, config):
         super(ImageEncoder, self).__init__()
+        self.config = config
         # cnn
         self.num_image_channel = config.num_image_channel
         # rnn
