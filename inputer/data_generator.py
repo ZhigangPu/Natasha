@@ -41,7 +41,7 @@ class DataGenerator:
     """
 
     def __init__(self, path_formulas, dir_images, path_matching, bucket=False,
-                 formula_pre=lambda s: s.strip().split(' '), iter_mode='data',
+                 formula_pre=lambda s: ['<s>'] + s.strip().split(' ') + ['</s>'], iter_mode='data',
                  img_pre=lambda x: x, max_iter=None, max_len=None, bucket_size=20,
                  ):
         self._path_formulas = path_formulas
