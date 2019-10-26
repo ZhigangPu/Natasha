@@ -1,7 +1,13 @@
+import sys
 from utils.image_operation import pad_batch_images
 from embedder.vocab import pad_sents
 import torch.nn as nn
 import torch
+from encoders.image_encoder import ImageEncoder
+from decoders.decoder import RNNDecoder
+from embedder.embedding import Embeddings
+from embedder.vocab import Vocab
+from utils.linux_wrapper import create_dir
 
 
 class ImageToLatexModel(nn.Module):
@@ -53,3 +59,40 @@ class ImageToLatexModel(nn.Module):
         hypothesis = self.decoder.beam_search(dec_init_state, visual_context, beam_size=5, max_decoding_time_step=150)
 
         return hypothesis
+
+    def save(self, dir, filename):
+        """ Save the model to a file
+
+        Args:
+            path(str): path to the file
+        """
+        create_dir(dir)
+        print('save model parameters to [%s]' % (dir + filename), file=sys.stdout)
+
+        params = {
+            'args': dict(config_encoder=self.encoder.config, config_decoder=self.decoder.config),
+            'state_dict': self.state_dict()
+        }
+
+        torch.save(params, dir + filename)
+
+    @classmethod
+    def load(cls, model_path):
+        """ Load the model from a file
+
+        Args:
+            model_path(str): path to the model persistent file
+
+        Returns:
+            model(nn.Module): ImageToLatexModel instance
+        """
+        params = torch.load(model_path, map_location=lambda storage, loc: storage)
+        args = params['args']
+        encoder = ImageEncoder(args.config_encoder)
+        vocab = Vocab.load(args.config_decoder.vocab_path)
+        embedding = Embeddings(args.config_decoder,  vocab)
+        decoder = RNNDecoder(args.config_decoder, embedding=embedding)
+        model = ImageToLatexModel(encoder, decoder)
+        model.load_state_dict(params['state_dict'])
+
+        return model
