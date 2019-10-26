@@ -20,6 +20,7 @@ class RNNDecoder(nn.Module):
 
     def __init__(self, config, embedding):
         super(RNNDecoder, self).__init__()
+        self.config = config
         self.embedding = embedding
         self.dropout = nn.Dropout(config.dropout)
         self.hidden_size = config.hidden_size
