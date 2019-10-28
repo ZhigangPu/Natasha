@@ -106,7 +106,6 @@ def train(config_train):
             optimizer.zero_grad()
 
             loss = model(batch)
-            print(loss)
 
             loss.backward()
 
@@ -197,7 +196,7 @@ def train(config_train):
 
 
 @click.command()
-@click.option("--train_config", default='../config/train.json')
+@click.option("--train_config", default='./config/train.json')
 def main(train_config):
     config_train = Config(train_config)
     train(config_train)
