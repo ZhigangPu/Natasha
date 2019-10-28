@@ -1,0 +1,26 @@
+{
+  "config_encoder": "../config/encoder.config.test.json",
+  "config_decoder": "../config/decoder.config.test.json",
+
+  "train_path_formulas": "../data/small.formulas.norm.txt",
+  "train_dir_images": "../data/small",
+  "train_path_matching": "../data/small.matching.txt",
+
+  "val_path_formulas": "../data/small.formulas.norm.txt",
+  "val_dir_images": "../data/small",
+  "val_path_matching": "../data/small.matching.txt",
+
+  "batch_size": 2,
+  "clip_grad": 5,
+  "valid_steps": 1,
+  "log_steps": 1,
+  "uniform_unit": 0.1,
+  "learning_rate": 1e-3,
+  "lr_decay": 0.8,
+  "patience": 3,
+  "max_trial": 3,
+  "max_epoch": 20,
+
+  "cuda": false,
+  "save_path": "../result/test/"
+}

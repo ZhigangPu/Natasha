@@ -1,0 +1,10 @@
+{
+  "num_image_channel": 3,
+
+  "embed_size": 512,
+  "vocab_size": 1000,
+  "hidden_size": 512,
+  "num_rnn_layers": 1,
+  "bidirectional": true,
+  "dropout": false
+}

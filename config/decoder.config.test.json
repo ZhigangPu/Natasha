@@ -1,0 +1,8 @@
+{
+  "vocab_path": "./data/vocab_train.txt",
+
+  "embed_size": 512,
+
+  "dropout": 0.2,
+  "hidden_size": 512
+}
