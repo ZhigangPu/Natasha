@@ -31,7 +31,7 @@ class ImageToLatexModel(nn.Module):
         images, formulas = batch
         batch_size = len(images)
         images_padded = pad_batch_images(images)
-        images_t = torch.tensor(images_padded).transpose(1, 3).transpose(2, 3).float()
+        images_t = torch.tensor(images_padded, device=self.device).transpose(1, 3).transpose(2, 3).float()
         formulas_padded = pad_sents(formulas, '<pad>')
 
         dec_init_state, visual_context = self.encoder(images_t)
@@ -96,3 +96,9 @@ class ImageToLatexModel(nn.Module):
         model.load_state_dict(params['state_dict'])
 
         return model
+
+    @property
+    def device(self) -> torch.device:
+        """ Determine which device to place the Tensors upon, CPU or GPU.
+        """
+        return self.encoder.h_projection.weight.device

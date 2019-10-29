@@ -36,6 +36,7 @@ def evaluate_ppl(model, val_set, batch_size=10):
             cum_loss += loss.item() * batch_size
             target_words_num = sum(len(tgt[1:]) for tgt in batch[1])
             cum_tgt_words += target_words_num
+            break
 
         ppl = np.exp(cum_loss / cum_tgt_words)
 
@@ -145,7 +146,7 @@ def train(config_train):
                 print('begin validation ...', file=sys.stdout)
 
                 # compute val. ppl and belu
-                val_ppl = evaluate_ppl(model, val_set, batch_size=5)
+                val_ppl = evaluate_ppl(model, val_set, batch_size=100)
                 valid_metric = -val_ppl
 
                 print('validation: iter %d, val. ppl %f' % (train_iter, val_ppl), file=sys.stdout)

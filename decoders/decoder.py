@@ -45,12 +45,12 @@ class RNNDecoder(nn.Module):
             P(tensor): Probability distribution over vocabulary (batch_size, vocab_size)
             scores(tensor): sum of gold word prediction accuracy
         """
-        target_padded_t = self.embedding.vocab.tgt.to_input_tensor(target_padded, torch.device('cpu'))
+        target_padded_t = self.embedding.vocab.tgt.to_input_tensor(target_padded, device=self.device)
         target_padded_t = target_padded_t[:-1]  # Chop of the <END> token for max length sentences, TODO why chopping?
 
         # Initialize combine output vector as zero
         batch_size = visual_context.size(0)
-        o_prev = torch.zeros(batch_size, self.hidden_size)
+        o_prev = torch.zeros(batch_size, self.hidden_size, device=self.device)
 
         # Initialize decoder state
         dec_state = dec_init_state
@@ -72,7 +72,8 @@ class RNNDecoder(nn.Module):
         combined_output = torch.stack(combined_output)  # (seq_len, batch_size, hidden_size)
         P = F.log_softmax(self.target_vocab_projection(combined_output), dim=-1)  # (seq_len, batch_size, vocab_size)
 
-        target_padded_indices = torch.tensor(self.embedding.vocab.tgt.words2indices(target_padded)).transpose(0, 1)
+        target_padded_indices = torch.tensor(self.embedding.vocab.tgt.words2indices(target_padded), device=self.device)\
+            .transpose(0, 1)
         target_mask = (target_padded_indices != self.embedding.vocab.tgt['<pad>']).float()
         target_gold_word_log_pro = torch.gather(P, index=target_padded_indices[1:].unsqueeze(-1), dim=-1)\
                                        .squeeze(-1)*target_mask[1:]
@@ -135,10 +136,10 @@ class RNNDecoder(nn.Module):
         enc_hidden_proj = self.att_projection(visual_context)  # (batch_size, seq_len, hidden_size)
 
         h_prev = dec_init_state
-        att_prev = torch.zeros(1, self.hidden_size)
+        att_prev = torch.zeros(1, self.hidden_size, device=self.device)
 
         hyp_list = [['<s>']]
-        hyp_scores = torch.zeros(len(hyp_list), dtype=torch.float)
+        hyp_scores = torch.zeros(len(hyp_list), dtype=torch.float, device=self.device)
         hyp_complete = []
 
         t = 0
@@ -149,7 +150,7 @@ class RNNDecoder(nn.Module):
             visual_context_ex = visual_context.expand(hyp_num, visual_context.size(1), visual_context.size(2))
             enc_hidden_proj_ex = enc_hidden_proj.expand(hyp_num, enc_hidden_proj.size(1), enc_hidden_proj.size(2))
 
-            Y_t = torch.tensor([self.embedding.vocab.tgt[hyp[-1]] for hyp in hyp_list], dtype=torch.long)
+            Y_t = torch.tensor([self.embedding.vocab.tgt[hyp[-1]] for hyp in hyp_list], dtype=torch.long, device=self.device)
             Ybar_t = self.embedding.target(Y_t)
 
             X = torch.cat([Ybar_t, att_prev], dim=-1)
@@ -188,12 +189,12 @@ class RNNDecoder(nn.Module):
             if len(hyp_complete) == beam_size:
                 break
 
-            hyp_tbd_ids_t = torch.tensor(hyp_tbd_ids, dtype=torch.long)
+            hyp_tbd_ids_t = torch.tensor(hyp_tbd_ids, dtype=torch.long, device=self.device)
             h_prev = (h_t[hyp_tbd_ids], c_t[hyp_tbd_ids])
             att_prev = att_t[hyp_tbd_ids]
 
             hyp_list = hyp_list_new
-            hyp_scores = torch.tensor(hyp_scores_new, dtype=torch.float)
+            hyp_scores = torch.tensor(hyp_scores_new, dtype=torch.float, device=self.device)
 
         if len(hyp_complete) == 0:
             hyp_complete.append(Hypothesis(value=hyp_list[0][1:], score=hyp_scores[0].item()))
@@ -201,3 +202,9 @@ class RNNDecoder(nn.Module):
         hyp_complete.sort(key=lambda hyp: hyp.score, reverse=True)
 
         return hyp_complete
+
+    @property
+    def device(self) -> torch.device:
+        """ Determine which device to place the Tensors upon, CPU or GPU.
+        """
+        return self.att_projection.weight.device

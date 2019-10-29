@@ -10,7 +10,7 @@
   "val_dir_images": "./data/images_val",
   "val_path_matching": "./data/val.matching.txt",
 
-  "batch_size": 2,
+  "batch_size": 10,
   "clip_grad": 1,
   "valid_steps": 50,
   "log_steps": 10,
