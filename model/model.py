@@ -88,10 +88,10 @@ class ImageToLatexModel(nn.Module):
         """
         params = torch.load(model_path, map_location=lambda storage, loc: storage)
         args = params['args']
-        encoder = ImageEncoder(args.config_encoder)
-        vocab = Vocab.load(args.config_decoder.vocab_path)
-        embedding = Embeddings(args.config_decoder,  vocab)
-        decoder = RNNDecoder(args.config_decoder, embedding=embedding)
+        encoder = ImageEncoder(args['config_encoder'])
+        vocab = Vocab.load(args['config_decoder'].vocab_path)
+        embedding = Embeddings(args['config_decoder'],  vocab)
+        decoder = RNNDecoder(args['config_decoder'], embedding=embedding)
         model = ImageToLatexModel(encoder, decoder)
         model.load_state_dict(params['state_dict'])
 
