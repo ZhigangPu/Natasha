@@ -12,6 +12,7 @@ from embedder.embedding import Embeddings
 from encoders.image_encoder import ImageEncoder
 from decoders.decoder import RNNDecoder
 from model.model import ImageToLatexModel
+from nltk.translate.bleu_score import corpus_bleu
 
 
 def evaluate_ppl(model, val_set, batch_size=10):
@@ -205,11 +206,46 @@ def train(config_train):
                     sys.exit(0)
 
 
+def decode(config_test):
+    """Performs decoding on a test set, and save the best-scoring decoding results.
+    If the target gold-standard sentences are given, the function also computes
+    corpus-level BLEU score.
+
+    """
+    test_set = DataGenerator(
+        path_matching=config_test.test_path_matching,
+        dir_images=config_test.test_dir_image,
+        path_formulas=config_test.test_path_formulas
+    )
+    batch_size = 1
+
+    # load model
+    model = ImageToLatexModel.load(config_test.model_save_path)
+
+    # decode
+    ref_bleu = []
+    hyp_bleu = []
+    for batch in test_set.minibatch(batch_size):
+        hypothesis = model.beam_search(batch[0])
+        print(hypothesis[0][0])
+        print('\n\n')
+        ref_bleu.append(batch[1][0][1: -1])
+        hyp_bleu.append(hypothesis[0][0])
+
+    bleu_score = corpus_bleu(ref_belu, hyp_bleu)
+
+
 @click.command()
 @click.option("--train_config", default='./config/train.json')
-def main(train_config):
-    config_train = Config(train_config)
-    train(config_train)
+@click.option("--test_config", default='./config/test.json')
+@click.option("--mode", default='train')
+def main(train_config, test_config, mode):
+    if mode == 'train':
+        config_train = Config(train_config)
+        train(config_train)
+    else:
+        test_config = Config(test_config)
+        decode(test_config)
 
 
 if __name__ == '__main__':
