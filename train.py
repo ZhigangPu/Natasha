@@ -5,6 +5,7 @@ import click
 import torch
 import numpy as np
 from utils.config import Config
+from utils.linux_wrapper import delete_file
 from inputer.data_generator import DataGenerator
 from embedder.vocab import Vocab
 from embedder.embedding import Embeddings
@@ -43,7 +44,7 @@ def evaluate_ppl(model, val_set, batch_size=10):
     if was_training:
         model.train()
 
-    return ppl
+    return ppl, loss
 
 
 def train(config_train):
@@ -68,6 +69,10 @@ def train(config_train):
     valid_steps = config_train.valid_steps
     log_steps = config_train.log_steps
     model_save_path = config_train.save_path
+
+    # delele old archives
+    delete_file(config_train.save_path+'train_loss.txt')
+    delete_file(config_train.save_path+'val_loss.txt')
 
     encoder = ImageEncoder(config_encoder)
     vocab = Vocab.load(config_decoder.vocab_path)
@@ -140,14 +145,18 @@ def train(config_train):
                                                                                              cum_loss / cum_examples,
                                                                                              np.exp(cum_loss / cum_tgt_words),
                                                                                              cum_examples), file=sys.stdout)
+                with open(config_train.save_path + 'train_loss.txt', 'a') as f:
+                    f.write(str(cum_loss / cum_examples) + '\n')
                 cum_loss = cum_examples = 0.
                 valid_num += 1
 
                 print('begin validation ...', file=sys.stdout)
 
                 # compute val. ppl and belu
-                val_ppl = evaluate_ppl(model, val_set, batch_size=100)
+                val_ppl, val_loss = evaluate_ppl(model, val_set, batch_size=100)
                 valid_metric = -val_ppl
+                with open(config_train.save_path + 'val_loss.txt', 'a') as f:
+                    f.write(str(val_loss.data.item()) + '\n')
 
                 print('validation: iter %d, val. ppl %f' % (train_iter, val_ppl), file=sys.stdout)
 
