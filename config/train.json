@@ -10,17 +10,17 @@
   "val_dir_images": "./data/images_val",
   "val_path_matching": "./data/val.matching.txt",
 
-  "batch_size": 10,
+  "batch_size": 4,
   "clip_grad": 1,
-  "valid_steps": 50,
+  "valid_steps": 2000,
   "log_steps": 10,
   "uniform_unit": 0.1,
   "learning_rate": 1e-3,
-  "lr_decay": 0.8,
-  "patience": 3,
-  "max_trial": 3,
+  "lr_decay": 0.5,
+  "patience": 5,
+  "max_trial": 5,
   "max_epoch": 20,
 
-  "cuda": false,
+  "cuda": true,
   "save_path": "./result/full/"
 }

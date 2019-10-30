@@ -1,0 +1,7 @@
+{
+  "test_path_matching": "./data/train.matching.txt",
+  "test_dir_image": "./data/images_train",
+  "test_path_formulas": "./data/train.formulas.norm.txt",
+
+  "model_save_path": "./result/full/best.model"
+}
